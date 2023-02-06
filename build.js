@@ -1,11 +1,7 @@
 (async () => {
   const isPrepare = process.env.NODE_ENV === "prepare";
   if (isPrepare) {
-    console.log("Starting to prepare everything! ⭐️");
-
-    console.log("We are almost there ⏳");
-
-    console.log("Finished with success 🚀 You can run `yarn start`");
+    console.log("Finished! 🚀 You can run `yarn start`");
     process.exit(0);
   }
 
