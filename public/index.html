@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<script type="text/javascript" src="./index.js"></script>
+<html lang="en">
+
+<head>
+  <title>Unicrow SDK Tutorial</title>
+  <link rel="icon" href="fav.webp" type="image/x-icon" />
+  <link rel="shortcut icon" href="fav.webp" type="image/x-icon" />
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: "Bai Jamjuree";
+    }
+    .wrapper {
+      display: flex;
+      justify-content: center;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 32px 32px;
+    }
+
+    .imageContainer {
+      display: flex;
+      align-items: center;
+    }
+
+    .imageContainer>img {
+      width: 210px;
+    }
+
+    .card {
+      background-color: rgba(0, 0, 0, 0.04);
+      padding: 32px;
+      border-radius: 12px;
+      margin: 42px 0;
+    }
+
+    .card h2 {
+      margin: 0;
+    }
+
+    .card h3 {
+      margin-top: 48px;
+    }
+
+    .output {
+      padding: 18px 8px;
+      background-color: white;
+      border: none;
+      margin-top: 16px;
+      overflow: hidden;
+      word-break: break-word;
+      border-radius: 10px;
+      box-shadow: 1px 2px 15px 2px rgba(0, 0, 0, 0.52);
+    }
+
+    button {
+      color: #fff;
+      border: 0;
+      cursor: pointer;
+      height: 38px;
+      margin: 12px 6px;
+      outline: none;
+      font-size: 14px;
+      font-weight: bold;
+      line-height: 20px;
+      border-radius: 10px;
+      background-color: #7048eb;
+      padding: 8px;
+      min-width: 180px;
+    }
+
+    button:hover {
+      cursor: pointer;
+    }
+
+    .footer {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .footer a {
+      color: #7048eb;
+      text-decoration: none;
+    }
+
+    .footer a:hover {
+      color: #705BEB;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrapper">
+    <div class="container">
+      <div class="imageContainer">
+        <img src="/logo.webp" alt="Unicrow Logo"/>
+        <h1>Welcome to Unicrow Tutorial!</h1>
+      </div>
+      <div>
+          <p>Open <i>src/index.js</i> in your IDE and read the code comments to follow the tutorial.
+             Come back here to execute each step of the tutorial.
+            </p>
+            <p>
+              <em><strong>Note:</strong></em> Each step title indicates if the step should be run by
+              the buyer, seller, marketplace, or the arbitrator.
+              You will need to switch either browsers or accounts accordingly.
+            </p>
+          </div>
+      <div class="card">
+        <h2>1 Payment and Release</h2>
+        <img src="img/Buyer-Seller.png" alt="Pay and Release diagram" style="width: 100%" id="1-pay-release"/>
+        <h3>1.1 Buyer: Pay to a seller</h3>
+        <button id="btn-1-1">Pay</button>
+        <div class="output" id="output-1-1" style="display: none">
+          <strong>Escrow ID:</strong>
+          <span id="escrowid-1-1"><em>(waiting for confirmation)</em></span><br><br>
+          <em>Escrow ID is used in all subsequent function calls to identify this escrow payment. Provide it as a parameter in the next step</em>
+        </div>
+
+        <h3>1.2 Buyer: Release the payment</h3>
+        <button id="btn-1-2">Release</button>
+        <div class="output" id="output-1-2" style="display: none">
+          <span id="waiting-1-2"><em>waiting for confirmation</em></span>
+          <span id="confirmed-1-2" style="display: none;">
+          <strong>Payment Released!</strong> You should see the balance in the seller's wallet<br><br>
+          <em>Note, that a platform fee was deducted from the final amount</em>
+            </span>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>2 Marketplace Fee</h2>
+        <img src="img/2-Buyer-Seller-Marketplace.png" alt="Marketplace diagram" style="width: 100%" id="2-Marketplace"/>
+        <h3>2.1 Buyer: Pay with marketplace fee</h3>
+        <button id="btn-2-1-m">Pay with modal</button>
+        <button id="btn-2-1">Pay without modal</button>
+        <div class="output" id="output-2-1" style="display: none">
+          <strong>Status</strong>: <span id="status-2-1"></span><br>
+          <strong>Txn hash:</strong> <span id="txhash-2-1"><i>(waiting for broadcast)</i></span><br />
+          <strong>Buyer's address:</strong> <span id="buyer-2-1"><i>(waiting for broadcast)</i></span><br />
+          <strong>Escrow ID</strong>: <span id="escrowid-2-1"><i>(waiting for confirmation)</i></span><br />
+          <strong>Marketplace address</strong>: <span id="marketplace-2-1"><i>(waiting for confirmation)</i></span><br />
+          <strong>Marketplace fee</strong>: <span id="marketplace-fee-2-1"><i>(waiting for confirmation)</i></span><br />
+          <em>To learn how this information was populated, see callbacks in the tutorial's source code above the pay function calls</em>
+        </div>
+
+        <h3>2.2 Seller or marketplace: Claim the payment</h3>
+        <button id="btn-2-2-m">Claim with modal</button>
+        <button id="btn-2-2">Claim without modal</button>
+        <div class="output" id="output-2-2" style="display: none">
+          <strong>Claim successful!</strong> <br>
+          <strong>Seller has received</strong>: <span id="claimed-seller"><em>(waiting for confirmation)</em></span><br>
+          <strong>Marketplace has received</strong>: <span id="claimed-marketplace"><em>(waiting for
+              confirmation)</em></span><br>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>3 Arbitration</h2>
+        <img src="img/3-Buyer-Seller-Arbitrator.png" alt="Arbitration Diagram" style="width: 100%" id="3-arbitration"/>
+        <h3>3.1 Buyer: Payment with an arbitrator</h3>
+        <button id="btn-3-1-m">Pay with modal</button>
+        <button id="btn-3-1">Pay without modal</button>
+        <div class="output" id="output-3-1" style="display: none">
+          <strong>Escrow ID:</strong>
+          <span id="escrowid-3-1"><i>(waiting for payment)</i></span><br />
+          <strong>Arbitrator address:</strong>
+          <span id="arbitrator-3-1"><i>(waiting for payment)</i></span><br />
+          <strong>Arbitrator fee:</strong>
+          <span id="arbitrator-fee-3-1"><i>(waiting for payment)</i></span><br />
+        </div>
+        
+        <h3>3.2 Arbitrator: Arbitrate the payment</h3>
+        <button id="btn-3-2-m">Arbitrate with modal</button>
+        <button id="btn-3-2">Arbitrate without modal</button>
+        <div class="output" id="output-3-2" style="display: none">
+          <strong>Arbitrator has decided as follows:</strong>
+          <ul>
+            <li><strong>Buyer should be refunded:</strong> <span id="buyer-share-3-2"><em>(waiting for broadcast)</em></span></li>
+            <li><strong>Seller should get:</strong> <span id="seller-share-3-2"><em>(waiting for broadcast)</em></span></li>
+          </ul>
+          <br>
+
+          <strong>After the fees were deducted, the following was sent</strong>
+          <ul>
+            <li><strong>Buyer has received:</strong>
+              <span id="buyer-3-2"><em>(waiting for confirmation)</em></span>
+            </li>
+            <li><strong>Seller has received:</strong>
+              <span id="seller-3-2"><em>(waiting for confirmation)</em></span>
+            </li>
+            <li><strong>Marketplace has received:</strong>
+              <span id="marketplace-3-2"><em>(waiting for confirmation)</em></span>
+            </li>
+            <li><strong>Arbitrator has received:</strong>
+              <span id="arbitrator-3-2"><em>(waiting for confirmation)</em></span>
+            </li>
+            <li><strong>Protocol fee was:</strong>
+              <span id="protocol-3-2"><em>(waiting for confirmation)</em></span>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>4 Challenge a Payment</h2>
+        <img src="img/4-Buyer-Seller.png" alt="Challenge Diagram" style="width: 100%" id="4-challenge"/>
+        <h3>4.1 Buyer: Pay to a seller</h3>
+        <button id="btn-4-1-m">Pay with modal</button>
+        <button id="btn-4-1">Pay without modal</button>
+        <div class="output" id="output-4-1" style="display: none">
+          <strong>Escrow ID</strong>: <span id="escrowid-4-1"><i>(waiting for confirmation)</i></span><br />
+          <strong>Paid:</strong> <span id="paid-4-1"><i>(waiting for confirmation)</i></span><br />
+          <strong>Challenge Period Ends:</strong> <span id="cp-end-4-1"><i>(waiting for confirmation)</i></span><br />
+        </div>
+
+        <h3>4.2 Buyer: Challenge the payment</h3>
+        <button id="btn-4-2-m">Challenge with modal</button>
+        <button id="btn-4-2">Challenge without modal</button>
+        <div class="output" id="output-4-2" style="display: none">
+          <strong>Challenge Sent!</strong> <br><br>
+          <strong>New challenge period start</strong>: <span id="challengeperiodstart-4-2"><i>(waiting for
+              data)</i></span><br />
+          <span id="seller-challenge-4-2"><em>The seller can challenge once the new Challenge Period
+              starts</em></span><br>
+          <strong>New challenge period end</strong>: <span id="challengeperiodend-4-2"><i>(waiting for
+              data)</i></span><br />
+          <span id="buyer-claim-4-2"><em>The buyer can claim the payment after this if the seller doesn't challenge
+              back</em></span>
+
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>5 Settlement</h2>
+        <img src="img/Buyer-Seller.png" alt="Settlement diagram" style="width: 100%" id="5-Settlement"/>
+        <h3>5.1 Payment</h3>
+        <button id="btn-5-1-m">Pay with modal</button>
+        <button id="btn-5-1">Pay without modal</button>
+        <div class="output" id="output-5-1" style="display: none">
+          <strong>Escrow ID</strong>: <span id="escrowid-5-1"><i>(waiting for confirmation)</i></span><br>
+          <strong>Amount in token</strong>: <span id="amount-5-1"><i>(waiting for confirmation)</i></span><br>
+          <strong>Marketplace Fee</strong>: <span id="marketplace-fee-5-1"><i>(waiting for confirmation)</i></span><br>
+          <strong>Protocol Fee</strong>: <span id="protocol-fee-5-1"><i>(waiting for confirmation)</i></span><br>
+          <strong>Amount after fees</strong>: <span id="net-amount-5-1"><i>(waiting for confirmation)</i></span><br><br>
+          <em>Optionally note these to compare them to settled values later</em>
+        </div>
+
+        <h3>5.2 Buyer or Seller: Offer a settlement</h3>
+        <button id="btn-5-2-m">Offer with modal</button>
+        <button id="btn-5-2">Offer without modal</button>
+        <div class="output" id="output-5-2" style="display: none">
+          <strong>Settlement offer sent!</strong><br>
+          <strong>Buyer's share</strong>: <span id="buyer-5-2"></span><br>
+          <strong>Seller's share</strong>: <span id="seller-5-2"></span><br>
+        </div>
+
+        <h3>5.3 Get settlement offer information</h3>
+        <button id="btn-5-3">Read</button>
+        <div class="output" id="output-5-3" style="display: none">
+          <strong>Who offered:</strong> <span id="offered-5-3">(retrieving data)</span><br>
+          <strong>Seller would receive:</strong> <span id="seller-share-5-3">(retrieving data)</span><br>
+          <strong>Buyer would receive:</strong> <span id="buyer-share-5-3">(retrieving data)</span><br>
+          <strong>Marketplace would receive:</strong> <span id="marketplace-share-5-3">(retrieving data)</span><br>
+          <strong>Unicrow fee would be:</strong> <span id="unicrow-share-5-3">(retrieving data)</span><br>
+        </div>
+
+        <h3>5.4 Seller or Buyer: Review and accept the offer</h3>
+        <button id="btn-5-4-m">View offer with modal</button>
+        <button id="btn-5-4">Accept offer without modal</button>
+        <div class="output" id="output-5-4" style="display: none">
+          <span id="message-5-4"><em>(Waiting for broadcast)</em></span><br>
+          <div id="claimed-info-5-4" style="display: none">
+            <strong>Seller has received:</strong> <span id="seller-claim-5-4">(retrieving data)</span><br>
+            <strong>Buyer has received:</strong> <span id="buyer-claim-5-4">(retrieving data)</span><br>
+            <strong>Marketplace has received:</strong> <span id="marketplace-claim-5-4">(retrieving data)</span><br>
+            <strong>Protocol fee was:</strong> <span id="protocol-claim-5-4">(retrieving data)</span>
+          </div>
+        </div>
+      </div>
+
+        <div class="card">
+          <h2>6 Indexer</h2>
+
+          <h3>6.1 Buyer: Prepare payments</h3>
+          <button id="btn-6-1">Pay</button>
+          <div class="output" id="output-6-1" style="display: none">
+            <p>
+              <strong>Status</strong>: <span id="result-6-1"></span>
+            </p>
+          </div>
+
+          <h3>6.2 List the payments</h3>
+          <button id="btn-6-2">List</button>
+          <pre class="output" id="output-6-2" style="display: none">
+            
+          </pre>
+
+          <h3>6.3 Seller: View Balance</h3>
+          <button id="btn-6-3">View Balance</button>
+          <pre class="output" id="output-6-3" style="display: none"></pre>
+
+          <h3>6.4 Seller: Claim Balance</h3>
+          <button id="btn-6-4">Claim Balance</button>
+          <div class="output" id="output-6-4" style="display: none">
+            <p>
+              <strong>Status</strong>: <span id="callbackresult-6-4"></span>
+            </p>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Sandbox</h2> 
+          <p>
+            <em>If you just want to try out a behavior of some function, you can assign it to this button. 
+            Its output will show up below</em>
+          </p>
+          <button id="btn-sandbox">Execute</button>
+          <pre class="output" id="output-sandbox" style="display: none;"></pre>
+        </div>
+        <footer class="footer">
+          <a href="https://discord.gg/9KTudepHQk" target="_blank">👋 Keep in touch</a>
+        </footer>
+    </div>
+  </div>
+</body>
+
+</html>
