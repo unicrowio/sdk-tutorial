@@ -542,7 +542,9 @@ window.onload = async () => {
 
     const result = await indexerInstance.getPaymentList(
       {
+        // Search for payments where the connected user is either seller OR buyer
         seller: connectedAccount,
+        buyer: connectedAccount
       }, { 
         limit: 20, 
         page: 1
