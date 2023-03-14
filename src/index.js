@@ -469,7 +469,7 @@ window.onload = async () => {
         document.getElementById("marketplace-claim-5-4").innerHTML = payload.amountMarketplace / denominator + " " + symbol
         document.getElementById("protocol-claim-5-4").innerHTML = payload.amountProtocol / denominator + " " + symbol
 
-        const connectedAccount = (await unicrowSdk.wallet.getWalletAccount()).toString()
+        const connectedAccount = (await unicrowSdk.wallet.getCurrentWalletAddress()).toString()
 
         if (unicrowSdk.helpers.isSameAddress(connectedAccount, payload.buyer)) {
           document.getElementById("5-Settlement").src = "img/5-4-Accept-Buyer.png"
@@ -538,7 +538,7 @@ window.onload = async () => {
   setAction("btn-6-2", async() => {
     const indexerInstance = unicrowSdk.indexer.getInstance(GRAPHQL_ENDPOINT);
 
-    const connectedAccount = await unicrowSdk.wallet.getWalletAccount()
+    const connectedAccount = await unicrowSdk.wallet.getCurrentWalletAddress()
 
     const result = await indexerInstance.getPaymentList(
       {
@@ -558,7 +558,7 @@ window.onload = async () => {
   document.getElementById("btn-6-3").onclick = async () => {
     const indexerInstance = unicrowSdk.indexer.getInstance(GRAPHQL_ENDPOINT);
 
-    const connectedAccount = (await unicrowSdk.wallet.getWalletAccount()).toString()
+    const connectedAccount = (await unicrowSdk.wallet.getCurrentWalletAddress()).toString()
     
     const result = await indexerInstance.getUserBalance(connectedAccount)
     
@@ -570,7 +570,7 @@ window.onload = async () => {
   setAction("btn-6-4", async () => {
     const indexerInstance = unicrowSdk.indexer.getInstance(GRAPHQL_ENDPOINT);
 
-    const connectedAccount = (await unicrowSdk.wallet.getWalletAccount()).toString()
+    const connectedAccount = (await unicrowSdk.wallet.getCurrentWalletAddress()).toString()
 
     // get user's balance to display it in the claim modal
     const balance = await indexerInstance.getUserBalance(connectedAccount)
