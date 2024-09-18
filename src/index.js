@@ -15,7 +15,6 @@
 //       continue reading from line 660 of this file
 
 import unicrowSdk from "@unicrowio/sdk"
-import { prettyPrintJson } from "pretty-print-json";
 
 window.onload = async () => {
 
@@ -33,10 +32,8 @@ window.onload = async () => {
   setAction("btn-1-1", async () => {
     // this is the first Unicrow SDK call
     await unicrowSdk.ui.pay({                 // EDIT BELOW and then press "Pay" in the browser as a buyer
-      amount: 0,                              // Amount in token
+      amount: 0.001,                          // Amount in ETH
       seller: "",                             // Paste the address of your testing seller account
-      tokenAddress: "",                       // Address of the token that the payment should be made in (remove or set to null for ETH)
-                                              //   (addresses for the most popular stablecoins are defined in constants at the very bottom)
       challengePeriod: ONE_DAY_IN_SEC * 14,   // two-week challenge period
     }, {
       confirmed: (payload) => {
@@ -75,14 +72,17 @@ window.onload = async () => {
   // The fee is sent to the marketplace's address during the release or claim process
 
   // 2.1 Buyer: Pay with a marketplace fee
+  //
+  // Using more fields this time to try more of the platform's features
 
   const marketplacePaymentData = {  // EDIT BELOW
-    amount: 0,                      // Amount in token
+    amount: 10,                     // Amount in token
     seller: "",                     // Set the seller address
-    tokenAddress: "",               // Payment token address
+    tokenAddress: "",               // Payment token address (addresses of selected ERC20 tokens at the very bottom)
     challengePeriod: 1,             // Recommended to keep the challenge period to one second to test claim function immediately
     marketplaceFee: 10,             // Marketplace fee in %
-    marketplace: ""                 // Paste an address of your test marketplace account
+    marketplace: "",                // Paste an address of your test marketplace account
+    paymentReference: ""            // Type in a text reference (e.g. order ID) to identify the payment 
   }
 
   // Using more callbacks to provide more granular status updates and information
@@ -104,6 +104,7 @@ window.onload = async () => {
       document.getElementById("escrowid-2-1").innerHTML = payload.escrowId
       document.getElementById("marketplace-2-1").innerHTML = payload.marketplace
       document.getElementById("marketplace-fee-2-1").innerHTML = payload.marketplaceFee + "%"
+      document.getElementById("payment-reference-2-1").innerHTML = payload.paymentReference
 
       document.getElementById("2-Marketplace").src = "img/2-1-Pay.png"
 
@@ -233,7 +234,7 @@ window.onload = async () => {
       document.getElementById("3-arbitration").src = arbitrationImage += ".png"
     },
     confirmed: async (payload) => {
-      const token = await unicrowSdk.core.getTokenInfo(payload.currency)
+      const token = await unicrowSdk.core.getTokenInfo(payload.tokenAddress)
       const denominator = Math.pow(10, token.decimals)
 
       document.getElementById("buyer-3-2").innerHTML = payload.amountBuyer / denominator + " " + token.symbol
@@ -304,7 +305,7 @@ window.onload = async () => {
   }, "output-4-1")
 
 
-  // 2.2 Buyer: Challenge the Payment
+  // 4.2 Buyer: Challenge the Payment
 
   // The challenge function returns the payment data including new challenge period information in its callback. Display some of them here
   const challengeCallback = {
@@ -331,6 +332,9 @@ window.onload = async () => {
     await unicrowSdk.core.challenge(99999999,  // EDIT HERE: replace with the Escrow ID returned from the previous step
       challengeCallback);
   })
+
+  // NOTE: Optionally, you can now call the ui.challenge() function for this escrow from the seller's account to 
+  //       see how the challenge periods work (a new one starts after the current one ends)
 
   // NOTE: To avoid reputation damage, the seller can simply call ui.refund() or core.refund() to fully refund the payment 
   //       to the buyer (no protocol or other fees are charged in such a case)
@@ -359,12 +363,12 @@ window.onload = async () => {
 
   const settlementPaymentCallbacks = {
     confirmed: (payload) => {
-      console.log(payload)
       document.getElementById("escrowid-5-1").innerHTML = payload.escrowId
       document.getElementById("amount-5-1").innerHTML = settlementPaymentData.amount.toString()
       document.getElementById("marketplace-fee-5-1").innerHTML = payload.splitMarketplace + "%"
       document.getElementById("protocol-fee-5-1").innerHTML = payload.splitProtocol + "%"
       document.getElementById("net-amount-5-1").innerHTML = ((100 - payload.splitMarketplace - payload.splitProtocol) * settlementPaymentData.amount / 100).toString()
+      // Note, that the above might produce some inprecision at the 
 
       document.getElementById("5-Settlement").src = "img/5-1-Pay.png"
     }
@@ -406,6 +410,8 @@ window.onload = async () => {
   }
 
   // When submitting an offer via modal, the user provides the inputs in the provided form. 
+  // NOTE: this currently produces an error toast message on the front-end. 
+  //       We'll get this fixed, but in the meantime know that the transaction goes through normally
   setAction("btn-5-2-m", async () => {
     await unicrowSdk.ui.settlementOffer(99999999,   // EDIT HERE: Escrow Id
       settlementOfferCallbacks)
@@ -420,18 +426,16 @@ window.onload = async () => {
       settlementOfferCallbacks)
   })
 
+
   // 5.3 Get settlement offer information
   //
   // The latest settlement offer information can be read from the contract
   // In this example, the information is used to calculate how much would each party receive if the offer is accepted as is
   setAction("btn-5-3", async () => {
     const result = await unicrowSdk.core.getEscrowData(99999999)  // EDIT HERE
-
-    const amount = result.amount.toNumber() / Math.pow(10, result.token.decimals);
-
     // this function calculates how much will each party receive from the escrow amount in a defined scenario.
     const amounts = unicrowSdk.core.calculateAmounts({
-      amount: amount,
+      amount: result.amount,
       splitBuyer: result.settlement.latestSettlementOfferBuyer,
       splitSeller: result.settlement.latestSettlementOfferSeller,
       splitProtocol: result.splitProtocol,
@@ -439,13 +443,15 @@ window.onload = async () => {
     });
 
     const tokenSymbol = result.token.symbol
+    const tokenDecimals = result.token.decimals;
 
     document.getElementById("offered-5-3").innerHTML = result.settlement.latestSettlementOfferAddress == result.buyer ? "Buyer" : "Seller";;
-    document.getElementById("buyer-share-5-3").innerHTML = amounts.amountBuyer + " " + tokenSymbol + "<br><em>(Buyer always gets a full share unless the payment is settled by the arbitrator)</em>"
-    document.getElementById("seller-share-5-3").innerHTML = amounts.amountSeller + " " + tokenSymbol + "<br><em>(Fees are deducted from seller's share)</em>"
-    document.getElementById("marketplace-share-5-3").innerHTML = amounts.amountMarketplace + " " + tokenSymbol
-    document.getElementById("unicrow-share-5-3").innerHTML = amounts.amountProtocol + " " + tokenSymbol + "<br><em>(Fees are reduced proportionally to the seller's share)</em>"
+    document.getElementById("buyer-share-5-3").innerHTML = convertWei(amounts.amountBuyer, tokenDecimals) + " " + tokenSymbol + "<br><em>(Buyer always gets a full share unless the payment is settled by the arbitrator)</em>"
+    document.getElementById("seller-share-5-3").innerHTML = convertWei(amounts.amountSeller, tokenDecimals) + " " + tokenSymbol + "<br><em>(Fees are deducted from seller's share)</em>"
+    document.getElementById("marketplace-share-5-3").innerHTML = convertWei(amounts.amountMarketplace, tokenDecimals) + " " + tokenSymbol
+    document.getElementById("unicrow-share-5-3").innerHTML = convertWei(amounts.amountProtocol, tokenDecimals) + " " + tokenSymbol + "<br><em>(Fees are reduced proportionally to the seller's share)</em>"
   }, "output-5-3")
+
 
   // 5.4 Seller or Buyer: Review and accept the offer
   //
@@ -453,12 +459,12 @@ window.onload = async () => {
   const acceptOfferCallbacks = {
     broadcasted: () => {
       // document.getElementById("output-5-4").style.display = "block"
-      document.getElementById("message-5-4").innerHTML = "<strong>Offer Sent</strong>"
+      document.getElementById("message-5-4").innerHTML = "<strong>Approval Sent</strong>"
     },
     confirmed: async (payload) => {
       console.log(payload)
       if (payload.name == "ApproveOffer") {
-        const tokenInfo = await unicrowSdk.core.getTokenInfo(payload.currency)
+        const tokenInfo = await unicrowSdk.core.getTokenInfo(payload.tokenAddress)
         const denominator = Math.pow(10, tokenInfo.decimals)
         const symbol = tokenInfo.symbol
 
@@ -517,6 +523,10 @@ window.onload = async () => {
         amount: 0,
         seller: "",
         tokenAddress: "",
+        // marketplace: "",
+        // marketplaceFee: 0,
+        // arbitrator: "",
+        // arbitratorFee: 0,
         challengePeriod: 1,
       },
       {
@@ -551,7 +561,7 @@ window.onload = async () => {
       }
     )
 
-    document.getElementById("output-6-2").innerHTML = prettyPrintJson.toHtml(result)
+    console.log(result);
   }, "output-6-2")
 
 
@@ -565,7 +575,8 @@ window.onload = async () => {
     const result = await indexerInstance.getUserBalance(connectedAccount)
     
     display("output-6-3")
-    document.getElementById("output-6-3").innerHTML = prettyPrintJson.toHtml(result);
+
+    console.log(result);
   };
 
   // 6.4 Seller: Claim Balance
@@ -621,8 +632,8 @@ window.onload = async () => {
       console.log(payload)
     },
     confirmed: (payload) => {
+      console.log("confirmed")
       console.log(payload)
-      document.getElementById("output-sandbox").innerHTML += "\n" + prettyPrintJson.toHtml(payload) + "\n";
     }
   }
 
@@ -641,7 +652,6 @@ window.onload = async () => {
     // await unicrowSdk.ui.pay(paymentInfo, sandboxCallbacks)
   }, "output-sandbox")
 }
-
 const ONE_DAY_IN_SEC = 86400
 
 function setAction(button, action, output) {
@@ -653,6 +663,10 @@ function setAction(button, action, output) {
 
     action()
   }
+}
+
+function convertWei(amount, decimals) {
+  return Number(amount) / Math.pow(10, decimals);
 }
 
 function display(id) {
@@ -672,18 +686,16 @@ function display(id) {
 // 
 // The SDK will ask you to add these network to your wallet if you don't have them configured
 //
-// EDIT BELOW to change to one of the other two testnets
+// EDIT BELOW to change to a testnet
 unicrowSdk.config({
-//  defaultNetwork: 'arbitrum',  // Uncomment and change to 'goerli' for Ehereum Goerli or 'development' for Unicrow private testnet
+  // defaultNetwork: 'arbitrumSepolia',  // Uncomment for Arbitrum Sepolia testnet
   autoSwitchNetwork: true         // This indicates whether functions interacting with the contract should switch the wallet to the default network automatically if a non-default network is selected
 });
 
 // Arbitrum One addresses of the most popular stablecoins
-const daiAddressArbitrum = "0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1"
-const usdcAddressArbitrum = "0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8"
-const usdtAddressArbitrum = "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9"
+const daiAddress = "0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1"
+const usdcAddress = "0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8"
+const usdtAddress = "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9"
 
-// addresses of the private  testnet "stablecoins" that the discord bot sends on request
-const daiAddressUnicrowTestnet = "0xDCc88e11a1c2031D995A2c65cc7f7f932Fb43e93"
-const usdcAddressUnicrowTestnet = "0x996F504B52727d9D561b9Dd51A717Ea76446FB6a"
-const usdtAddressUnicrowTestnet = "0xab9465D527061F9baAB390f6b46F9c16122d84f6"
+// Chainlink's ERC20 token on ArbitrumSepolia
+const chainlinkToken = "0xb1D4538B4571d411F07960EF2838Ce337FE1E80E"
