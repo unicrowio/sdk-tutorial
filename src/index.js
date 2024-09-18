@@ -677,18 +677,13 @@ function display(id) {
 // 
 // The SDK is by default configured to connect the user's wallet to Arbitrum One network.
 //
-// There are two other network configurations available: 
-//   - Ethereum Goerli (we chose to deploy there instead of Arbitrum Goerli because of much larger support for 
-//     "stablecoins", DEXes, etc.)
-//   - Unicrow's private testnet - to use the private testnet, it is necessary to have test ETH and tokens. 
-//     Paste your wallet address to #request-tokens channel at our Discord to get some: https://discord.gg/2mdDKCcAb9
-//     We want the private testnet to be useful and free tool for all the developers. Please be kind when using it :-)
+// There is a testnet network deployment available too on Arbitrum Sepolia. 
+// We plan to introduce our own ETH and ERC20 faucet but in lieu of that we 
+// recommend Chainlink's faucet: https://faucets.chain.link/arbitrum-sepolia
 // 
-// The SDK will ask you to add these network to your wallet if you don't have them configured
-//
 // EDIT BELOW to change to a testnet
 unicrowSdk.config({
-  // defaultNetwork: 'arbitrumSepolia',  // Uncomment for Arbitrum Sepolia testnet
+  // defaultNetwork: 'arbitrumSepolia',  // Uncomment for Arbitrum Sepolia testnet. You 
   autoSwitchNetwork: true         // This indicates whether functions interacting with the contract should switch the wallet to the default network automatically if a non-default network is selected
 });
 
