@@ -12,7 +12,7 @@
   "author": "Thiago Marinho <tgmarinho@gmail.com>",
   "license": "MIT",
   "dependencies": {
-    "@unicrowio/sdk": "1.2.0-beta.2",
+    "@unicrowio/sdk": "1.2.0-beta.2"
   },
   "devDependencies": {
     "@types/node": "^18.17.1",
