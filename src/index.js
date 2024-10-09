@@ -683,7 +683,7 @@ function display(id) {
 // 
 // EDIT BELOW to change to a testnet
 unicrowSdk.config({
-  // defaultNetwork: 'arbitrumSepolia',  // Uncomment for Arbitrum Sepolia testnet. You 
+  // defaultNetwork: 'arbitrumSepolia',  // Uncomment for Arbitrum Sepolia testnet.
   autoSwitchNetwork: true         // This indicates whether functions interacting with the contract should switch the wallet to the default network automatically if a non-default network is selected
 });
 
