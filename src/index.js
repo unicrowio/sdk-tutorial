@@ -12,7 +12,7 @@
 
 //
 // Note: The SDK is by default configured to work with Arbitrum One network. To use one of the testnets, 
-//       continue reading from line 660 of this file
+//       continue reading from line 668 of this file
 
 import unicrowSdk from "@unicrowio/sdk"
 
@@ -52,7 +52,7 @@ window.onload = async () => {
 
   setAction("btn-1-2", async () => {
     
-    await unicrowSdk.ui.release(99999999,     // EDIT HERE: replace this with the Escrow ID returned in the previous step
+    await unicrowSdk.ui.release(1,     // EDIT HERE: replace this with the Escrow ID returned in the previous step
       {
         confirmed: (payload) => {
           document.getElementById("waiting-1-2").style.display = "none"
@@ -67,8 +67,9 @@ window.onload = async () => {
 
   // 2 MARKETPLACE INTEGRATION
   //
-  // Platforms integrating Unicrow can charge a fee without having to process the payment and exposing their users' funds to attacks and fraud.
-  // They simply provide their address and their fee when they create the checkout payment.
+  // Platforms integrating Unicrow can process payments and charge fees 
+  //  without holding custody of the payments or exposing the funds to attacks and fraud.
+  // The platform simply provides their address and their fee when creating the checkout payment.
   // The fee is sent to the marketplace's address during the release or claim process
 
   // 2.1 Buyer: Pay with a marketplace fee
@@ -514,7 +515,7 @@ window.onload = async () => {
   // 
   // When you run the indexer successfully, it should be accessible at this url below
   
-  const GRAPHQL_ENDPOINT = "http://localhost:8080/v1/graphql";
+  const GRAPHQL_ENDPOINT = "";
 
   // 6.1 Buyer: Prepare payments
 
@@ -549,10 +550,13 @@ window.onload = async () => {
     const indexerInstance = unicrowSdk.indexer.getInstance(GRAPHQL_ENDPOINT);
 
     const connectedAccount = await unicrowSdk.wallet.getCurrentWalletAddress()
-
+    const chainId = (await unicrowSdk.wallet.getNetwork()).chainId
+    
     const result = await indexerInstance.getPaymentList(
       {
         // Search for payments where the connected user is either seller OR buyer
+        // network: unicrowSdk
+        chainId,
         seller: connectedAccount,
         buyer: connectedAccount
       }, { 
@@ -561,7 +565,7 @@ window.onload = async () => {
       }
     )
 
-    console.log(result);
+    document.getElementById("output-6-2").innerHTML = convertResultToJson(result)
   }, "output-6-2")
 
 
@@ -571,12 +575,13 @@ window.onload = async () => {
     const indexerInstance = unicrowSdk.indexer.getInstance(GRAPHQL_ENDPOINT);
 
     const connectedAccount = (await unicrowSdk.wallet.getCurrentWalletAddress()).toString()
-    
-    const result = await indexerInstance.getUserBalance(connectedAccount)
+    const chainId = (await unicrowSdk.wallet.getNetwork()).chainId
+
+    const result = await indexerInstance.getUserBalance(connectedAccount, chainId)
     
     display("output-6-3")
 
-    console.log(result);
+    document.getElementById("output-6-3").innerHTML = convertResultToJson(result)
   };
 
   // 6.4 Seller: Claim Balance
@@ -584,30 +589,33 @@ window.onload = async () => {
     const indexerInstance = unicrowSdk.indexer.getInstance(GRAPHQL_ENDPOINT);
 
     const connectedAccount = (await unicrowSdk.wallet.getCurrentWalletAddress()).toString()
+    const chainId = (await unicrowSdk.wallet.getNetwork()).chainId
 
     // get user's balance to display it in the claim modal
-    const balance = await indexerInstance.getUserBalance(connectedAccount)
+    const balance = await indexerInstance.getUserBalance(connectedAccount, chainId)
  
     // get list of escrow wallets, that are ready to claim
-    const escrowsToClaim = await indexerInstance.getClaimableEscrows(connectedAccount)
+    const escrowsToClaim = await indexerInstance.getClaimableEscrows(connectedAccount, chainId)
 
     console.log(balance)
     console.log(escrowsToClaim)
 
     const result = await unicrowSdk.ui.claimMultiple(escrowsToClaim, balance, {
       connectingWallet: () => {
-        document.getElementById("callbackresult-6-4").innerHTML = "Connecting"
+        document.getElementById("status-6-4").innerHTML = "Connecting"
       },
       broadcasting: () => {
-        document.getElementById("callbackresult-6-4").innerHTML = "Broadcasting";
+        document.getElementById("status-6-4").innerHTML = "Broadcasting";
       },
       broadcasted: () => {
-        document.getElementById("callbackresult-6-4").innerHTML = "Broadcasted"
+        document.getElementById("status-6-4").innerHTML = "Broadcasted"
       },
       confirmed: (payload) => {
-        document.getElementById("callbackresult-6-4").innerHTML = "Confirmed"
+        document.getElementById("status-6-4").innerHTML = "Confirmed"
       },
     })
+
+    document.getElementById("result-6-4").innerHTML = convertResultToJson(result)
   }, "output-6-4")
 
   
@@ -624,7 +632,7 @@ window.onload = async () => {
 
   // SANDBOX
 
-  // Below, find a small Sandbox code that is more versatile do use for your further testing
+  // Below, find a small Sandbox code that is more versatile to use for your further testing
   // Run the code by pressing the "Execute" button at the very bottom of the tutorial page in the Sandbox section
 
   const sandboxCallbacks = {
@@ -633,26 +641,52 @@ window.onload = async () => {
     },
     confirmed: (payload) => {
       console.log("confirmed")
-      console.log(payload)
+      document.getElementById("output-sandbox").innerHTML = `<pre style="text-align: left;">` + convertResultToJson(payload) + `</pre>`
     }
   }
 
   setAction("btn-sandbox", async() => {
     const paymentInfo = {
+      // buyer: "",
       seller: "",
       tokenAddress: "",
-      amount: 0,
-      challengePeriod: 0,
-      // marketplace: "",
-      // marketplaceFee: 0,
-      // arbitrator: "",
-      // arbitratorFee: 0
+      amount: 10,
+      challengePeriod: 1,
+      marketplace: "",
+      marketplaceFee: 10,
+      arbitrator: "",
+      arbitratorFee: 0,
+      paymentReference: ""
     }
-
-    // await unicrowSdk.ui.pay(paymentInfo, sandboxCallbacks)
+    
+    // await unicrowSdk.core.pay(paymentInfo, sandboxCallbacks)
   }, "output-sandbox")
 }
+
 const ONE_DAY_IN_SEC = 86400
+
+// TEST NETWORKS AND TOKENS
+// 
+// The SDK is by default configured to connect the user's wallet to Arbitrum One network.
+// Other networks available are Base mainnet, Arbitrum Sepolia, and Base Sepolia
+//
+// EDIT BELOW to switch to another network
+
+unicrowSdk.config({
+  // chainId: 99999999,  // Uncomment and edit for a specific network: 421614 for Arbitrum Sepolia, 8453 for Base, or 84532 for Base Sepolia
+  autoSwitchNetwork: true         // This indicates whether functions interacting with the contract should switch the wallet to the default network automatically if a non-default network is selected
+});
+
+// Arbitrum One addresses of the most popular stablecoins
+const daiArbitrumAddress = "0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1"
+const usdcArbitrumAddress = "0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8"
+const usdtArbitrumAddress = "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9"
+
+const usdcBaseAddress = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
+const usdcBaseSepoliaAddress = "0x036CbD53842c5426634e7929541eC2318f3dCF7e"
+
+
+// HELPER FUNCTIONS
 
 function setAction(button, action, output) {
   document.getElementById(button).onclick = async () => {
@@ -673,24 +707,11 @@ function display(id) {
   document.getElementById(id).style.display = "block"
 }
 
-// TEST NETWORKS AND TOKENS
-// 
-// The SDK is by default configured to connect the user's wallet to Arbitrum One network.
-//
-// There is a testnet network deployment available too on Arbitrum Sepolia. 
-// We plan to introduce our own ETH and ERC20 faucet but in lieu of that we 
-// recommend Chainlink's faucet: https://faucets.chain.link/arbitrum-sepolia
-// 
-// EDIT BELOW to change to a testnet
-unicrowSdk.config({
-  // defaultNetwork: 'arbitrumSepolia',  // Uncomment for Arbitrum Sepolia testnet. You 
-  autoSwitchNetwork: true         // This indicates whether functions interacting with the contract should switch the wallet to the default network automatically if a non-default network is selected
-});
-
-// Arbitrum One addresses of the most popular stablecoins
-const daiAddress = "0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1"
-const usdcAddress = "0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8"
-const usdtAddress = "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9"
-
-// Chainlink's ERC20 token on ArbitrumSepolia
-const chainlinkToken = "0xb1D4538B4571d411F07960EF2838Ce337FE1E80E"
+function convertResultToJson(result) {
+  const replacer = (key, value) =>
+    typeof value === 'bigint'
+        ? value.toString()
+        : value
+        
+  return JSON.stringify(result, replacer, 2);
+}
