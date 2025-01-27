@@ -16,6 +16,22 @@
 
 import unicrowSdk from "@unicrowio/sdk"
 
+// CONFIGURE NETWORK
+// 
+// It is necessary to configure which network the SDK should connect to. 
+//
+// Unicrow supports the following networks
+// - 42161: Arbitrum One
+// - 8453: Base
+// - 421614: Arbitrum Sepolia
+// - 84532: Base Sepolia
+
+unicrowSdk.config({
+  chainId: 42161,  // Edit for a different network
+  autoSwitchNetwork: true         // This indicates whether functions interacting with the contract should switch the wallet to the default network automatically if a non-default network is selected
+});
+
+
 window.onload = async () => {
 
   // Edit and test the sections below one-by-one. 
@@ -665,21 +681,9 @@ window.onload = async () => {
 
 const ONE_DAY_IN_SEC = 86400
 
-// TEST NETWORKS AND TOKENS
-// 
-// The SDK is by default configured to connect the user's wallet to Arbitrum One network.
-// Other networks available are Base mainnet, Arbitrum Sepolia, and Base Sepolia
-//
-// EDIT BELOW to switch to another network
-
-unicrowSdk.config({
-  // chainId: 99999999,  // Uncomment and edit for a specific network: 421614 for Arbitrum Sepolia, 8453 for Base, or 84532 for Base Sepolia
-  autoSwitchNetwork: true         // This indicates whether functions interacting with the contract should switch the wallet to the default network automatically if a non-default network is selected
-});
-
 // Arbitrum One addresses of the most popular stablecoins
 const daiArbitrumAddress = "0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1"
-const usdcArbitrumAddress = "0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8"
+const usdcArbitrumAddress = "0xaf88d065e77c8cC2239327C5EDb3A432268e5831"
 const usdtArbitrumAddress = "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9"
 
 const usdcBaseAddress = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
